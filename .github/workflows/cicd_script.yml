@@ -1,0 +1,33 @@
+name: Deploy to Server via Tailscale
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up SSH key
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: unnecessary
+          if_key_exists: replace
+
+      # Add Tailscale IP to known hosts
+      - name: Add host key
+        run: ssh-keyscan -H 100.92.35.65 >> ~/.ssh/known_hosts
+
+      # Copy file using Tailscale IP
+      - name: Copy hello.txt to server
+        run: |
+          scp hello.txt ${{ secrets.SSH_USERNAME }}@100.92.35.65:/home/${{ secrets.SSH_USERNAME }}/
+
+      # Show content of the file
+      - name: Display file content
+        run: |
+          ssh ${{ secrets.SSH_USERNAME }}@100.92.35.65 'cat /home/${{ secrets.SSH_USERNAME }}/hello.txt'
