@@ -1,33 +1,46 @@
-name: CI/CD Workflow with SSH and Git
-
+name: Deploy to Tailscale Server
 on:
   push:
     branches:
-      - develop # Trigger for pushes to the develop branch
-  workflow_dispatch:
+      - develop
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
-# Setup Tailscale
-    - name: Tailscale
-      uses: tailscale/github-action@v3
-      with:
-       oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-       oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-       tags: tag:ci
-    - name: Executing CI/CD Commands on Server
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: 100.92.35.65
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        script: |
+      # Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Setup Tailscale
+      - name: Setup Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      # Setup SSH Key
+      - name: Configure Private Key and Test Connection
+        run: |
+          # Save the private key to a file
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/private_key
+          chmod 600 ~/.ssh/private_key
+
+          # Add the server to known_hosts
+          
+
+          # Test the SSH connection
+          ssh -i ~/.ssh/private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@100.92.35.65 "echo 'Connection Successful'"
+
+      # Deploy code
+      - name: Deploy Code to Server
+        run: |
+          ssh -i ~/.ssh/private_key -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@100.92.35.65 << 'EOF'
           cd /home/ilab/sandip/hello/server_access_task
           git checkout develop
-          git pull origin develop 
-          cat hello.txt
+          git pull origin develop
+          cat ~/hello.txt
+          EOF
