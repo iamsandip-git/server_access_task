@@ -1,0 +1,33 @@
+name: CI/CD Workflow with SSH and Git
+
+on:
+  push:
+    branches:
+      - develop # Trigger for pushes to the develop branch
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+# Setup Tailscale
+    - name: Tailscale
+      uses: tailscale/github-action@v3
+      with:
+       oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+       oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+       tags: tag:ci
+    - name: Executing CI/CD Commands on Server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: 100.92.35.65
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /home/ilab/sandip/hello/server_access_task
+          git checkout develop
+          git pull origin develop 
+          cat hello.txt
