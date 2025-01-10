@@ -1,33 +1,56 @@
-name: Deploy to Server
+name: Deploy to Tailscale Server
 on:
-  push:
-    branches: [ develop ]
+ push:
+   branches: [ develop ]
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+ deploy:
+   runs-on: ubuntu-latest
+   steps:
+     # Checkout repository
+     - name: Checkout code
+       uses: actions/checkout@v4
+       with:
+         fetch-depth: 0
 
-      # Set up SSH key
-      - name: Install SSH key
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          known_hosts: unnecessary
-          if_key_exists: replace
+     # Setup Tailscale
+     - name: Tailscale
+       uses: tailscale/github-action@v3
+       with:
+         oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+         oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+         tags: tag:ci
 
-      # Add Tailscale IP to known hosts
-      - name: Add host key
-        run: ssh-keyscan -H 100.92.35.65 >> ~/.ssh/known_hosts
+     # Setup SSH
+     - name: Install SSH key
+       uses: shimataro/ssh-key-action@v2
+       with:
+         key: ${{ secrets.SSH_PRIVATE_KEY }}
+         known_hosts: unnecessary
+         if_key_exists: replace
 
-      # Copy file using Tailscale IP
-      - name: Copy hello.txt to server
-        run: |
-          scp hello.txt ${{ secrets.SSH_USERNAME }}@100.92.35.65:/home/${{ secrets.SSH_USERNAME }}/
+     # Add Tailscale host to known_hosts
+     - name: Add known hosts
+       run: ssh-keyscan -H 100.92.35.65 >> ~/.ssh/known_hosts
 
-      # Show content of the file
-      - name: Display file content
-        run: |
-          ssh ${{ secrets.SSH_USERNAME }}@100.92.35.65 'cat /home/${{ secrets.SSH_USERNAME }}/hello.txt'
+     # Copy repository to server
+     - name: Copy repository
+       uses: appleboy/scp-action@v0.1.7
+       with:
+         host: 100.92.35.65
+         username: ${{ secrets.SSH_USERNAME }}
+         key: ${{ secrets.SSH_PRIVATE_KEY }}
+         source: "."
+         target: "~/sandip"
+
+     # Show contents of copied files
+     - name: Display contents
+       uses: appleboy/ssh-action@v1.0.3
+       with:
+         host: 100.92.35.65
+         username: ${{ secrets.SSH_USERNAME }}
+         key: ${{ secrets.SSH_PRIVATE_KEY }}
+         script: |
+           cd ~/TASK_PRE
+           ls -la
+           cat ~/hello.txt
