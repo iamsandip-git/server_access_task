@@ -26,6 +26,8 @@ jobs:
       - name: Configure Private Key and Test Connection
         run: |
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
           # Save the private key to a file
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/private_key
           chmod 600 ~/.ssh/private_key
