@@ -45,5 +45,5 @@ jobs:
           cd /home/ilab/sandip/hello/server_access_task
           git checkout develop
           git pull origin develop
-          cat ~/hello.txt
+          cat hello.txt
           EOF
