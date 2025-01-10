@@ -29,19 +29,19 @@ jobs:
          known_hosts: unnecessary
          if_key_exists: replace
 
-     # Add Tailscale host to known_hosts
-     - name: Add known hosts
-       run: ssh-keyscan -H 100.92.35.65 >> ~/.ssh/known_hosts
+    #  # Add Tailscale host to known_hosts
+    #  - name: Add known hosts
+    #    run: ssh-keyscan -H 100.92.35.65 >> ~/.ssh/known_hosts
 
      # Copy repository to server
-     - name: Copy repository
-       uses: appleboy/scp-action@v0.1.7
-       with:
-         host: 100.92.35.65
-         username: ${{ secrets.SSH_USERNAME }}
-         key: ${{ secrets.SSH_PRIVATE_KEY }}
-         source: "."
-         target: "~/sandip"
+    #  - name: Copy repository
+    #    uses: appleboy/scp-action@v0.1.7
+    #    with:
+    #      host: 100.92.35.65
+    #      username: ${{ secrets.SSH_USERNAME }}
+    #      key: ${{ secrets.SSH_PRIVATE_KEY }}
+    #      source: "."
+    #      target: "~/sandip"
 
      # Show contents of copied files
      - name: Display contents
@@ -51,6 +51,6 @@ jobs:
          username: ${{ secrets.SSH_USERNAME }}
          key: ${{ secrets.SSH_PRIVATE_KEY }}
          script: |
-           cd ~/TASK_PRE
-           ls -la
+           git branch
+           git pull origin develop
            cat ~/hello.txt
